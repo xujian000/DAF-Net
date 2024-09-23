@@ -3,6 +3,5 @@ utils/__pycache__/
 test_result/
 Logs/
 TestResult/*
-MSRS_train/*
 MSRS_train_imgsize_128_stride_200.h5
 .vscode/
