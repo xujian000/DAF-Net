@@ -10,21 +10,15 @@ class ContrastiveLoss(nn.Module):
         self.temperature = temperature
 
     def forward(self, features, labels):
-        # 展开特征图以计算相似性，在 [batch_size, channels, height, width] 之间求平均得到 [batch_size, channels]
-        features = features.mean(dim=[2, 3])  # [4, batch_size, channels]
-        features = features.view(
-            -1, features.size(-1)
-        )  # 展开为 [4*batch_size, channels]
+        features = features.mean(dim=[2, 3])
+        features = features.view(-1, features.size(-1))
 
-        # 计算特征之间的相似度
         sim_matrix = F.cosine_similarity(
             features.unsqueeze(1), features.unsqueeze(0), dim=2
         )
 
-        # 创建标签掩码
         labels = labels.unsqueeze(1) == labels.unsqueeze(0)
 
-        # 计算对比损失
         exp_sim = torch.exp(sim_matrix / self.temperature)
         loss = -torch.log(exp_sim[labels].sum(1) / exp_sim.sum(1))
         return loss.mean()
@@ -138,10 +132,6 @@ def laplacian_kernel(source, target, kernel_mul=2.0, kernel_num=5, fix_sigma=Non
 
 
 class MKMMDLoss(nn.Module):
-    # 较高的 kernel_mul 值：增大核宽度，使得高斯核能够覆盖更广泛的特征空间。这可能会使得 MMD 损失更为平滑，对细节特征的敏感度降低。
-    # 较低的 kernel_mul 值：减小核宽度，使得高斯核更加集中，可能会对特征的局部细节更加敏感。
-    # 较高的 kernel_num 值：使用更多的高斯核可以捕捉更多不同尺度的特征，从而提高 MMD 损失的表达能力。但是，这也可能导致计算开销增加。
-    # 较低的 kernel_num 值：减少高斯核的数量，计算开销较小，但可能无法捕捉到足够的特征信息。
     def __init__(self, kernel_mul=10.0, kernel_num=5, fix_sigma=None):
         super(MKMMDLoss, self).__init__()
         self.kernel_mul = kernel_mul
@@ -152,7 +142,6 @@ class MKMMDLoss(nn.Module):
     def forward(self, source, target):
         batch_size = source.size(0)
 
-        # 使用高斯核和拉普拉斯核计算
         gaussian_result = gaussian_kernel(
             source, target, self.kernel_mul, self.kernel_num, self.fix_sigma
         )
@@ -160,16 +149,13 @@ class MKMMDLoss(nn.Module):
             source, target, self.kernel_mul, self.kernel_num, self.fix_sigma
         )
 
-        # 合并两个核的结果
-        # kernels = gaussian_result + laplacian_result
-        kernels = gaussian_result
+        kernels = gaussian_result + laplacian_result
 
         XX = kernels[:batch_size, :batch_size]
         YY = kernels[batch_size:, batch_size:]
         XY = kernels[:batch_size, batch_size:]
         YX = kernels[batch_size:, :batch_size]
 
-        # 计算MKMMD损失
         loss = torch.mean(XX + YY - XY - YX)
 
         return loss
@@ -195,58 +181,37 @@ class Sobelxy(nn.Module):
 
 
 def flatten_features(x):
-    """
-    将四维张量展平为二维张量
-    x: Tensor of shape (batch_size, channels, height, width)
-    return: Tensor of shape (batch_size, channels * height * width)
-    """
     batch_size, channels, height, width = x.size()
-    return x.view(batch_size, -1)  # 展平为二维张量
+    return x.view(batch_size, -1)
 
 
 def infoNCE_loss(x, y, temperature=0.1):
-    """
-    计算 InfoNCE 损失
-    x: Tensor of shape (batch_size, channels, height, width)
-    y: Tensor of shape (batch_size, channels, height, width)
-    temperature: 温度系数
-    """
-    # 展平张量
     x_flat = flatten_features(x)
     y_flat = flatten_features(y)
 
-    # 归一化特征向量
     x_flat = F.normalize(x_flat, p=2, dim=1)
     y_flat = F.normalize(y_flat, p=2, dim=1)
 
-    # 计算相似度矩阵
     similarity_matrix = torch.matmul(x_flat, y_flat.T) / temperature
 
-    # 生成目标标签，正样本的标签为对角线位置
     batch_size = x.size(0)
     labels = torch.arange(batch_size).cuda()
 
-    # 计算 InfoNCE 损失
     loss = F.cross_entropy(similarity_matrix, labels)
 
     return loss
 
 
 def mutual_information_loss(mine, x, y):
-    # Joint distribution
     joint = mine(x, y).mean()
-    # Marginal distribution (shuffle y)
     y_shuffle = y[torch.randperm(y.size(0))]
     marginal = mine(x, y_shuffle).mean()
-
-    # 互信息估计
     mi_loss = -(joint - torch.log(marginal + 1e-6))
     return mi_loss
 
 
 def cc(img1, img2):
     eps = torch.finfo(torch.float32).eps
-    """Correlation coefficient for (N, C, H, W) image; torch.float32 [0.,1.]."""
     N, C, _, _ = img1.shape
     img1 = img1.reshape(N, C, -1)
     img2 = img2.reshape(N, C, -1)
@@ -287,7 +252,6 @@ def ssim(
     full=False,
     val_range=None,
 ):
-    # Value range can be different from 255. Other common ranges are 1 (sigmoid) and 2 (tanh).
     if val_range is None:
         if torch.max(img1) > 128:
             max_val = 255
@@ -324,17 +288,12 @@ def ssim(
 
     v1 = 2.0 * mu1_mu2 + C1
     v2 = mu1_sq + mu2_sq + C1
-    # sigma1_sq = sigma1_sq/(mu1_sq+0.00000001)
     v = torch.zeros_like(sigma1_sq) + 0.0001
     sigma1 = torch.where(sigma1_sq < 0.0001, v, sigma1_sq)
     mu1_sq = torch.where(mu1_sq < 0.0001, v, mu1_sq)
 
     ssim_map = ((2 * sigma12 + C2) * v1) / ((sigma1_sq + sigma2_sq + C2) * v2)
 
-    # if size_average:
-    #     ret = ssim_map.mean()
-    # else:
-    #     ret = ssim_map.mean(1).mean(1).mean(1)
     ret = ssim_map
     if full:
         return ret, sigma1
@@ -345,8 +304,8 @@ def msssim(
     img1, img2, y, window_size=11, size_average=True, val_range=None, normalize=False
 ):
     img1 = img1.unsqueeze(0)  # shape: [1, 1, 128, 128]
-    img2 = img2.unsqueeze(0)  # shape: [1, 1, 128, 128]
-    y = y.unsqueeze(0)  # shape: [1, 1, 128, 128]
+    img2 = img2.unsqueeze(0)
+    y = y.unsqueeze(0)
 
     device = img1.device
     img3 = img1 * 0.5 + img2 * 0.5
@@ -365,5 +324,4 @@ def msssim(
         tmp = 1 - torch.mean(r * loss1) - torch.mean((1 - r) * loss2)
         loss = loss + tmp
     loss = loss / 5.0
-    loss = loss  # + torch.mean(torch.abs(img1-y))*0.5 #+ torch.mean(torch.norm(utils.gradient(y)-utils.gradient(img2)))*0.00001
     return loss

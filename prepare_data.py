@@ -64,12 +64,12 @@ def is_low_contrast(
     return ratio < fraction_threshold
 
 
-data_name = "MSRS_train"
+data_name = "DataSet4Training"
 img_size = 128  # patch size
 stride = 200  # patch stride
 
-IR_files = sorted(get_img_file(r"MSRS_train/ir"))
-VIS_files = sorted(get_img_file(r"MSRS_train/vi"))
+IR_files = sorted(get_img_file(r"DataSet4Training/ir"))
+VIS_files = sorted(get_img_file(r"DataSet4Training/vi"))
 
 assert len(IR_files) == len(VIS_files)
 h5f = h5py.File(

@@ -23,7 +23,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from utils.loss import Fusionloss, cc, infoNCE_loss
 import kornia
-from utils.m3dloss import M3DLoss
+from utils.kernel_loss import kernelLoss
 from utils.Evaluator import average_similarity
 
 
@@ -42,10 +42,8 @@ GPU_number = os.environ["CUDA_VISIBLE_DEVICES"]
 Loss Function
 ------------------------------------------------------------------------------
 """
-gaussianLoss = M3DLoss("gaussian")
-laplaceLoss = M3DLoss("laplace")
-linearLoss = M3DLoss("linear")
-polinominalLoss = M3DLoss("polinominal")
+gaussianLoss = kernelLoss("gaussian")
+laplaceLoss = kernelLoss("laplace")
 MSELoss = nn.MSELoss()
 L1Loss = nn.L1Loss()
 criteria_fusion = Fusionloss()
@@ -127,9 +125,7 @@ DataSet and DataLoader
 ------------------------------------------------------------------------------
 """
 trainloader = DataLoader(
-    H5Dataset(
-        r"data/MSRS_train_imgsize_128_stride_200.h5"
-    ),
+    H5Dataset(r"data/DataSet4Training_imgsize_128_stride_200.h5"),
     batch_size=batch_size,
     shuffle=True,
     num_workers=0,

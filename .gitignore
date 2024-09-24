@@ -5,3 +5,4 @@ Logs/
 TestResult/*
 MSRS_train_imgsize_128_stride_200.h5
 .vscode/
+data/*

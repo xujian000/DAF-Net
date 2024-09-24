@@ -19,7 +19,6 @@ class RBF(nn.Module):
         return self.bandwidth
 
     def forward(self, X):
-        # 展平输入
         X_flat = X.view(X.size(0), -1)
         L2_distances = torch.cdist(X_flat, X_flat) ** 2
         rbf_matrix = torch.exp(
@@ -38,7 +37,6 @@ class PoliKernel(nn.Module):
         self.degree = degree
 
     def forward(self, X):
-        # 展平输入
         X_flat = X.view(X.size(0), -1)
         K = (torch.matmul(X_flat, X_flat.t()) + self.constant_term) ** self.degree
         return K
@@ -49,7 +47,6 @@ class LinearKernel(nn.Module):
         super().__init__()
 
     def forward(self, X):
-        # 展平输入
         X_flat = X.view(X.size(0), -1)
         K = torch.matmul(X_flat, X_flat.t())
         return K
@@ -61,7 +58,6 @@ class LaplaceKernel(nn.Module):
         self.gammas = torch.FloatTensor([0.1, 1, 5]).cuda()
 
     def forward(self, X):
-        # 展平输入
         X_flat = X.view(X.size(0), -1)
         L2_distances = torch.cdist(X_flat, X_flat) ** 2
         laplace_matrix = torch.exp(
@@ -70,7 +66,7 @@ class LaplaceKernel(nn.Module):
         return laplace_matrix.sum(dim=0)
 
 
-class M3DLoss(nn.Module):
+class kernelLoss(nn.Module):
     def __init__(self, kernel_type):
         super().__init__()
         if kernel_type == "gaussian":
@@ -83,11 +79,9 @@ class M3DLoss(nn.Module):
             self.kernel = LaplaceKernel()
 
     def forward(self, X, Y):
-        # 展平输入
         X_flat = X.view(X.size(0), -1)
         Y_flat = Y.view(Y.size(0), -1)
 
-        # 计算核矩阵
         K = self.kernel(torch.cat([X_flat, Y_flat], dim=0))
 
         X_size = X.size(0)
