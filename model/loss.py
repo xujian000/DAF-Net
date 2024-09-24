@@ -43,42 +43,6 @@ class Fusionloss(nn.Module):
         return loss_total, loss_in, loss_grad
 
 
-class Fusionloss2(nn.Module):
-    def __init__(self):
-        super(Fusionloss2, self).__init__()
-        self.sobelconv = Sobelxy()
-
-    def forward(self, image_vis, image_ir, generate_img):
-        image_y = image_vis[:, :1, :, :]
-        x_in_max = torch.max(image_y, image_ir)
-        loss_in = F.l1_loss(x_in_max, generate_img)
-        y_grad = self.sobelconv(image_y)
-        ir_grad = self.sobelconv(image_ir)
-        generate_img_grad = self.sobelconv(generate_img)
-        x_grad_joint = torch.max(y_grad, ir_grad)
-        loss_grad = F.l1_loss(x_grad_joint, generate_img_grad)
-        loss_total = loss_in + 25 * loss_grad
-        return loss_total, loss_in, loss_grad
-
-
-class Fusionloss3(nn.Module):
-    def __init__(self):
-        super(Fusionloss3, self).__init__()
-        self.sobelconv = Sobelxy()
-
-    def forward(self, image_vis, image_ir, generate_img):
-        image_y = image_vis[:, :1, :, :]
-        x_in_max = torch.max(image_y, image_ir)
-        loss_in = F.l1_loss(x_in_max, generate_img)
-        y_grad = self.sobelconv(image_y)
-        ir_grad = self.sobelconv(image_ir)
-        generate_img_grad = self.sobelconv(generate_img)
-        x_grad_joint = torch.max(y_grad, ir_grad)
-        loss_grad = F.l1_loss(x_grad_joint, generate_img_grad)
-        loss_total = loss_in + 25 * loss_grad
-        return loss_total, loss_in, loss_grad
-
-
 def gaussian_kernel(source, target, kernel_mul=2.0, kernel_num=5, fix_sigma=None):
     source = source.view(source.size(0), -1)
     target = target.view(target.size(0), -1)

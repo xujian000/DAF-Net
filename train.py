@@ -1,30 +1,23 @@
 # -*- coding: utf-8 -*-
 
-'''
-------------------------------------------------------------------------------
-Import packages
-------------------------------------------------------------------------------
-'''
+
 import os
-
-
-from Net.net import (
+import time
+import datetime
+import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader
+from model.loss import Fusionloss, cc, infoNCE_loss
+import kornia
+from model.kernel_loss import kernelLoss
+from utils.evaluator import average_similarity
+from model.net import (
     Restormer_Encoder,
     Restormer_Decoder,
     BaseFeatureExtractor,
     DetailFeatureExtractor,
 )
 from utils.dataset import H5Dataset
-
-import time
-import datetime
-import torch
-import torch.nn as nn
-from torch.utils.data import DataLoader
-from utils.loss import Fusionloss, cc, infoNCE_loss
-import kornia
-from utils.kernel_loss import kernelLoss
-from utils.Evaluator import average_similarity
 
 
 """
@@ -125,7 +118,7 @@ DataSet and DataLoader
 ------------------------------------------------------------------------------
 """
 trainloader = DataLoader(
-    H5Dataset(r"data/DataSet4Training_imgsize_128_stride_200.h5"),
+    H5Dataset(r"data/dataSet4Training_imgsize_128_stride_200.h5"),
     batch_size=batch_size,
     shuffle=True,
     num_workers=0,
@@ -259,7 +252,7 @@ for epoch in range(num_epochs):
             f"[E:{epoch}/{num_epochs}][B:{i}/{len(loader['train'])}][L1:{loss1.item():.2f},mse:{mse_loss.item():.2f},cc:{cc_loss.item():.2f},tv:{tv_loss.item():.2f},mmd:{mmd_loss.item():.2f},lap:{laplace_loss.item():.2f},gauss:{gauss_loss.item():.2f},ince:{ince_loss.item():.2f},ccb:{basic_cc_loss.item():.2f}][L2:{loss2.item():.2f},f:{fusionloss.item():.2f},cc:{cc_loss.item():.2f}][{similarity_cos:.2f},{similarity_pearson:.2f},{distance_euclidean:.2f}]"
         )
 
-    save_path = os.path.join(f"models/{result_name}_{epoch}.pth")
+    save_path = os.path.join(f"checkPoints/{result_name}_{epoch}.pth")
     checkpoint = {
         'Encoder': Encoder.state_dict(),
         'Decoder': Decoder.state_dict(),

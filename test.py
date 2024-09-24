@@ -1,4 +1,4 @@
-from Net.net import (
+from model.net import (
     Restormer_Encoder,
     Restormer_Decoder,
     BaseFeatureExtractor,
@@ -6,10 +6,10 @@ from Net.net import (
 )
 import os
 import numpy as np
-from utils.Evaluator import Evaluator
+from utils.evaluator import Evaluator
 import torch
 import torch.nn as nn
-from utils.img_read_save import img_save, image_read_cv2
+from utils.imageUtils import img_save, image_read_cv2
 import warnings
 import logging
 
@@ -17,7 +17,7 @@ warnings.filterwarnings("ignore")
 logging.basicConfig(level=logging.CRITICAL)
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-ckpt_path = r"models/daf_net.pth"
+ckpt_path = r"checkPoints/daf_net.pth"
 print(f"{ckpt_path}\n")
 for dataset_name in ["TNO", "RoadScene", "MSRS_test"]:  #
     print(f"The test result of {dataset_name}:")

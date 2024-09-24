@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.ndimage import sobel
+import os
+from skimage.io import imsave
 
 
 def image_read(path, mode="RGB"):
@@ -119,6 +121,33 @@ def display_ycbcr_image(ycbcr_img):
     plt.title("Converted RGB Image from YCbCr")
     plt.axis("off")
     plt.show()
+
+
+def image_read_cv2(path, mode="RGB"):
+    img_BGR = cv2.imread(path).astype("float32")
+    assert mode == "RGB" or mode == "GRAY" or mode == "YCrCb", "mode error"
+    if mode == "RGB":
+        img = cv2.cvtColor(img_BGR, cv2.COLOR_BGR2RGB)
+    elif mode == "GRAY":
+        img = np.round(cv2.cvtColor(img_BGR, cv2.COLOR_BGR2GRAY))
+    elif mode == "YCrCb":
+        img = cv2.cvtColor(img_BGR, cv2.COLOR_BGR2YCrCb)
+    return img
+
+
+def img_save(image, imagename, savepath):
+    if not os.path.exists(savepath):
+        os.makedirs(savepath)
+    # Convert image to 8-bit if it's a floating point grayscale image
+
+    if image.dtype == np.float32 or image.dtype == np.float64:
+        # Normalize the image to 0-255
+        image = (
+            255 * (image - np.min(image)) / (np.max(image) - np.min(image))
+        ).astype(np.uint8)
+
+    # Gray_pic
+    imsave(os.path.join(savepath, "{}.png".format(imagename)), image)
 
 
 __all__ = ["image_read", "norm", "plot_images", "check", "crop", "compute_gradient"]

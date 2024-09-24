@@ -1,6 +1,6 @@
 # DAF
 
-### Env
+### Env Settings
 
 ```
 # create virtual environment
@@ -20,7 +20,7 @@ python test.py
 
 **1. Data Preparation**
 
-Download the MSRS dataset from [this link](https://github.com/Linfeng-Tang/MSRS) and place it in the folder `'./MSRS/'`.
+Download the MSRS dataset from [this link](https://github.com/Linfeng-Tang/MSRS) and place it in the folder `'./dataSet4Training/'`.
 
 **2. Pre-Processing**
 
@@ -40,4 +40,4 @@ Run
 python train.py
 ```
 
-and the trained model is available in `'./models/'`.
+and the trained model is available in `'./checkPoints/'`.
